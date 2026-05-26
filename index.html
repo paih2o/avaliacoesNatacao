@@ -8535,6 +8535,7 @@ document.getElementById('excludeAlunoBtn').addEventListener('click', async () =>
       if (sl.alunoId === socio.id && ['scheduled','confirmed'].includes(sl.status)) {
         sl.alunoId = null;
         sl.status = 'free';
+        sl._unbook = true;
         releasedSlots++;
       }
     });
@@ -10017,6 +10018,7 @@ function openSlotModal(slotId, preselectAlunoId) {
       // Limpar slot antigo
       existing.slot.alunoId = null;
       existing.slot.status = 'free';
+      existing.slot._unbook = true;
       existing.slot.emailSentAt = null;
       existing.slot.whatsappSentAt = null;
     }
@@ -10074,6 +10076,7 @@ function openSlotModal(slotId, preselectAlunoId) {
 
     slot.alunoId = null;
     slot.status = 'free';
+    slot._unbook = true;
     slot.emailSentAt = null;
     slot.whatsappSentAt = null;
     saveSessoes(CURRENT_YEAR, SESSOES);
@@ -10165,6 +10168,7 @@ function openMoveSlotPicker(originSlot) {
       targetSlot.status = originSlot.status;
       originSlot.alunoId = null;
       originSlot.status = 'free';
+      originSlot._unbook = true;
       saveSessoes(CURRENT_YEAR, SESSOES);
       closeModal('moveSlotModal');
       showToast(`Movido para ${formatDateShort(targetSess.data)} · ${targetSlot.time}`);
@@ -10676,7 +10680,7 @@ document.getElementById('avalMenuExcluir').addEventListener('click', async () =>
   logAlunoChange(socio, 'excluded', `Excluído de ${CURRENT_YEAR} (${ins.nivel} · ${_exNomeT})`);
   SESSOES.forEach(s => s.slots.forEach(sl => {
     if (sl.alunoId === aluno.id && ['scheduled','confirmed'].includes(sl.status)) {
-      sl.alunoId = null; sl.status = 'free';
+      sl.alunoId = null; sl.status = 'free'; sl._unbook = true;
       sl.emailSentAt = null; sl.whatsappSentAt = null;
     }
   }));
