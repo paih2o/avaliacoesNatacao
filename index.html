@@ -2133,6 +2133,62 @@ body.evaluation-mode .tabbar { display: none; }
 
 const LEVELS = {
 
+  Tartarugas: {
+    name: "Tartarugas",
+    short: "T",
+    color: "#84cc16",
+    nextLevel: "Focas",
+    targetPct: 0.90,
+    targetLabel: "Muito Bom (90%)",
+    sections: [
+      {
+        key: "adaptacao",
+        title: "Adaptação ao Meio Aquático",
+        weight: 0.30,
+        criteria: [
+          "Tolerância à água na face e no corpo.",
+          "Exploração do meio aquático de forma autónoma.",
+          "Início do trabalho de profundidade."
+        ]
+      },
+      {
+        key: "respiracao",
+        title: "Respiração",
+        weight: 0.20,
+        criteria: [
+          "Controla o ritmo respiratório (expira-inspira-expira).",
+          "Executa imersão seguida de deslocamento."
+        ]
+      },
+      {
+        key: "equilibrio",
+        title: "Equilíbrio",
+        weight: 0.20,
+        criteria: [
+          "Desloca-se na borda da piscina.",
+          "Sobe e desce da parede de forma autónoma."
+        ]
+      },
+      {
+        key: "propulsao",
+        title: "Propulsão",
+        weight: 0.10,
+        criteria: [
+          "Executa movimentos propulsivos MS com apoio de forma autónoma.",
+          "Executa movimentos propulsivos MI com apoio (dorsal/ventral) de forma autónoma."
+        ]
+      },
+      {
+        key: "saltos",
+        title: "Saltos",
+        weight: 0.20,
+        criteria: [
+          "Executa salto para a água de pé de forma autónoma, seguido de movimentos propulsivos."
+        ]
+      }
+    ]
+  },
+  
   Focas: {
     name: "Focas",
     short: "F",
