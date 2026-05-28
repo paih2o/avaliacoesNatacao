@@ -9514,10 +9514,10 @@ function _pctStr(v) { return v !== null ? Math.round(v * 100) + '%' : '—'; }
 function _scoreLabel(v) { return v === 1 ? '1' : v === 2 ? '2' : v === 3 ? '3' : '—'; }
 
 function gerarPDF(shareOpts, opts = {}) {
-  // Permite override para envio em massa: opts.aluno, opts._avalState, opts.epoca, opts.deliverMode ('blob' devolve blob em vez de entregar)
+  // Permite override para envio em massa: opts.aluno, opts.avalState, opts.epoca, opts.deliverMode ('blob' devolve blob em vez de entregar)
   const aluno = opts.aluno || (currentAlunoList && currentAlunoList[currentAlunoIdx]);
-  const _avalState = opts._avalState || _avalState;
-  const _epoca = opts.epoca || _epoca;
+  const _avalState = opts.avalState || avalState;
+  const _epoca = opts.epoca || currentEpoca;
   if (!aluno || !_avalState) { showToast('Abre a avaliação primeiro'); return; }
 
   // Verificar se jsPDF está carregado
