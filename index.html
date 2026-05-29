@@ -2188,6 +2188,21 @@ body.evaluation-mode .tabbar { display: none; }
   .sr-row .sr-badge.noemail { background:#fde4d6;color:#8a4a1d; }
 </style>
 
+<!-- Modal: debug -->
+<div class="modal-backdrop" id="debugModal">
+  <div class="modal" style="max-width:600px;width:96%;max-height:92vh;display:flex;flex-direction:column;">
+    <h2 style="margin:0 0 8px;">🐞 Diagnóstico</h2>
+    <textarea id="debugContent" readonly style="flex:1;min-height:300px;max-height:60vh;font-family:monospace;font-size:11px;padding:8px;border:1px solid #ccc;border-radius:6px;resize:none;white-space:pre;"></textarea>
+    <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+      <button class="modal-btn" id="debugCopyBtn" style="flex:1;min-width:100px;background:#1a1a1a;color:#fff;">📋 Copiar</button>
+      <button class="modal-btn" id="debugShareBtn" style="flex:1;min-width:100px;background:#1a1a1a;color:#fff;">📤 Partilhar</button>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" data-modal-close="debugModal">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <!-- ═══════════════════════════════════════════════════════════════
@@ -12775,7 +12790,33 @@ document.getElementById('avalDebugBtn')?.addEventListener('click', () => {
   }
   const txt = lines.join('\n');
   console.log(txt);
-  alert(txt);
+  document.getElementById('debugContent').value = txt;
+  document.getElementById('debugModal').classList.add('show');
+});
+
+document.getElementById('debugCopyBtn')?.addEventListener('click', async () => {
+  const txt = document.getElementById('debugContent').value;
+  try {
+    await navigator.clipboard.writeText(txt);
+    showToast('✓ Copiado');
+  } catch(e) {
+    // fallback: seleciona o texto
+    const ta = document.getElementById('debugContent');
+    ta.select();
+    ta.setSelectionRange(0, 999999);
+    try { document.execCommand('copy'); showToast('✓ Copiado'); }
+    catch(e2) { showToast('Falhou — seleciona manualmente'); }
+  }
+});
+
+document.getElementById('debugShareBtn')?.addEventListener('click', async () => {
+  const txt = document.getElementById('debugContent').value;
+  if (navigator.share) {
+    try { await navigator.share({ text: txt, title: 'Diagnóstico Avaliação' }); }
+    catch(e) { /* user cancelled */ }
+  } else {
+    showToast('Partilha não disponível — usa Copiar');
+  }
 });
 //  Re-corre normalização e mostra relatório.
 // ═══════════════════════════════════════════════════════════════
