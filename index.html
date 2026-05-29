@@ -1449,7 +1449,6 @@ body.evaluation-mode .tabbar { display: none; }
       <div class="pct" id="totalPct">—</div>
       <div class="lbl">Total</div>
     </div>
-    <button class="icon-btn" id="avalDebugBtn" title="Diagnóstico" style="font-size:16px;background:#fff7e0;color:#7a5b00;border:1px solid #d4a017;margin-right:6px;">🐞</button>
     <button class="icon-btn" id="avalMenuBtn" title="Opções do aluno" style="font-size:20px;letter-spacing:1px;">⋯</button>
   </header>
 
@@ -1783,6 +1782,11 @@ body.evaluation-mode .tabbar { display: none; }
     <button id="btnDiagAval" type="button"
       style="width:100%;min-height:48px;background:#fff;color:#666;border:1px dashed #bbb;border-radius:10px;font-size:14px;font-weight:500;margin-bottom:12px;cursor:pointer;font-family:inherit;">
       🔧 Diagnóstico avaliações
+    </button>
+
+    <button id="btnReopenMaio" type="button"
+      style="width:100%;min-height:48px;background:#fff;color:#d97706;border:1px solid #d97706;border-radius:10px;font-size:14px;font-weight:500;margin-bottom:12px;cursor:pointer;font-family:inherit;">
+      🔓 Reabrir todas as avaliações Maio
     </button>
 
     <div style="margin-top:24px;padding:14px;background:#f7f4ee;border-radius:8px;font-size:12px;color:#666;line-height:1.6;">
@@ -7924,13 +7928,6 @@ function openAluno(idx) {
   }
   banner.innerHTML = bannerHtml;
 
-  if (readOnly) {
-    document.querySelectorAll('#view-aval .section-card').forEach(s => s.classList.add('locked'));
-    document.querySelectorAll('#view-aval .passa-btn').forEach(s => s.classList.add('locked'));
-  } else {
-    document.querySelectorAll('#view-aval .section-card').forEach(s => s.classList.remove('locked'));
-    document.querySelectorAll('#view-aval .passa-btn').forEach(s => s.classList.remove('locked'));
-  }
   // Esconder botões de ação se readOnly (mas finalizeBtn aparece em Maio mesmo se finalized — para permitir reabrir)
   document.getElementById('saveBtn').style.display = readOnly ? 'none' : '';
   const finBtn = document.getElementById('finalizeBtn');
@@ -7954,6 +7951,16 @@ function openAluno(idx) {
   renderTechnicalSections(levelDef);
   applyAvalToUI();
   updateUI(levelDef);
+
+  // Aplicar locked DEPOIS de renderTechnicalSections (que regenera o innerHTML e perderia as classes)
+  if (readOnly) {
+    document.querySelectorAll('#view-aval .section-card').forEach(s => s.classList.add('locked'));
+    document.querySelectorAll('#view-aval .passa-btn').forEach(s => s.classList.add('locked'));
+  } else {
+    document.querySelectorAll('#view-aval .section-card').forEach(s => s.classList.remove('locked'));
+    document.querySelectorAll('#view-aval .passa-btn').forEach(s => s.classList.remove('locked'));
+  }
+
   showView('view-aval');
 }
 
@@ -12878,6 +12885,17 @@ document.getElementById('btnDiagAval')?.addEventListener('click', () => {
   }
   alert(msg);
   console.log('[Diagnóstico]', { total, corrigidas, ignoradas, detalhes });
+});
+
+document.getElementById('btnReopenMaio')?.addEventListener('click', async () => {
+  if (!DATA.maio) { alert('Sem avaliações Maio.'); return; }
+  const ids = Object.keys(DATA.maio).filter(k => DATA.maio[k] && DATA.maio[k].finalized);
+  if (ids.length === 0) { alert('Nenhuma avaliação Maio está finalizada.'); return; }
+  const ok = confirm('🔓 Reabrir ' + ids.length + ' avaliação(ões) Maio para edição?\n\nFica tudo desbloqueado. Podes finalizar individualmente depois.');
+  if (!ok) return;
+  ids.forEach(k => { DATA.maio[k].finalized = false; });
+  saveAvaliacoes(CURRENT_YEAR, DATA);
+  alert('✓ ' + ids.length + ' avaliação(ões) reabertas. Recarrega a vista do aluno.');
 });
 
 
