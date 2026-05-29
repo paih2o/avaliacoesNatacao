@@ -12509,7 +12509,16 @@ function srGerarPDFBlob(aluno, epoca) {
   if (levelDef && typeof _normalizeAvalSections === 'function') {
     _normalizeAvalSections(aval, levelDef);
   }
-  const r = gerarPDF(null, { aluno: aluno, avalState: aval, epoca: epoca, deliverMode: 'blob' });
+  // Garantir a Observação no anexo: se não foi editada à mão e está vazia no que está guardado,
+  // regenerar na hora (tal como a folha individual faz ao abrir o aluno).
+  let avalParaPdf = aval;
+  if (!aval.observacaoEdited && !(aval.observacao || '').trim()
+      && typeof gerarObsParaState === 'function'
+      && typeof SECTION_KEY_TO_SINTESE !== 'undefined' && SECTION_KEY_TO_SINTESE[aluno.nivel]) {
+    const obsAuto = gerarObsParaState(aval, aluno, epoca);
+    if (obsAuto) avalParaPdf = Object.assign({}, aval, { observacao: obsAuto });
+  }
+  const r = gerarPDF(null, { aluno: aluno, avalState: avalParaPdf, epoca: epoca, deliverMode: 'blob' });
   return r;  // { blob, filename }
 }
 
