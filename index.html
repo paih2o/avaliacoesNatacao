@@ -1685,6 +1685,7 @@ body.evaluation-mode .tabbar { display: none; }
     <button class="icon-btn" id="newSessionBtn" style="font-size:24px;">+</button>
   </header>
   <div class="list-container">
+    <button id="btnEEsemMarcacao" style="width:100%;min-height:52px;margin-bottom:12px;background:#1a1a1a;color:#fff;border:none;border-radius:12px;font-weight:600;font-size:15px;">EE sem marcação</button>
     <div id="agendaSessoes"></div>
   </div>
 </div>
@@ -12705,7 +12706,69 @@ async function srEnviarSelecionados() {
 
 // Handlers
 document.getElementById('btnOpenSendReports')?.addEventListener('click', srOpen);
+// ═══════════════════════════════════════════════════════════════
+//  EE SEM MARCAÇÃO — lista + convite WhatsApp (opção A pré-escrita)
+// ═══════════════════════════════════════════════════════════════
+function eeSemMarcacaoLista() {
+  const comMarcacao = new Set();
+  (typeof mySessoes === 'function' ? mySessoes() : SESSOES).forEach(s => {
+    (s.slots || []).forEach(sl => { if (sl.alunoId != null) comMarcacao.add(String(sl.alunoId)); });
+  });
+  return ALUNOS.filter(a =>
+    a.status !== 'excluded' &&
+    a.professorId === CURRENT_PROFESSOR_ID &&
+    !comMarcacao.has(String(a.id))
+  ).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+}
 
+function eeConvidarWhatsApp(alunoId) {
+  const aluno = ALUNOS.find(a => String(a.id) === String(alunoId));
+  if (!aluno) return;
+  const tel = (aluno.eeTel || '').replace(/\D/g, '');
+  if (!tel) { showToast('Sem telefone do EE para ' + aluno.nome); return; }
+  const cfg = (typeof loadEmailJSConfig === 'function') ? (loadEmailJSConfig() || {}) : {};
+  const link = (cfg.bookingLink || '').trim();
+  if (!link) showToast('Sem link de marcação nas definições — mensagem vai sem link');
+  const primeiroEE = (aluno.eeNome || '').split(' ').find(w => w.length > 1);
+  const saud = primeiroEE ? 'Olá ' + primeiroEE + '!' : 'Olá!';
+  // ↓ Texto do convite (opção A). Podes editar à vontade, ex.: acrescentar "amanhã".
+  const msg = saud + ' Espero que esteja tudo bem. Antes de fechar as reuniões desta época, ainda consigo arranjar uma vaga para falarmos sobre a evolução de ' + aluno.nome + '.' + (link ? ' Se quiser, escolha aqui o horário que lhe der mais jeito: ' + link : '');
+  const prefix = tel.startsWith('351') ? tel : '351' + tel;
+  window.open('https://wa.me/' + prefix + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function eeSemMarcacaoOpen() {
+  const lista = eeSemMarcacaoLista();
+  const antigo = document.getElementById('eeSemMarcModal');
+  if (antigo) antigo.remove();
+  const rows = lista.length ? lista.map(a => {
+    const temTel = !!(a.eeTel || '').replace(/\D/g, '');
+    const sub = (a.nivel || '') + (a.eeNome ? ' · ' + a.eeNome : '');
+    const btn = temTel
+      ? '<button class="ee-wa-btn" data-id="' + a.id + '" style="min-height:50px;padding:0 16px;background:#25d366;color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;">💬 WhatsApp</button>'
+      : '<span style="font-size:12px;color:#b91c1c;">sem nº</span>';
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #eee;">' +
+        '<div><div style="font-weight:600;">' + a.nome + '</div><div style="font-size:12px;color:#666;">' + sub + '</div></div>' +
+        btn + '</div>';
+  }).join('') : '<div style="text-align:center;color:#666;padding:24px 0;">Todos os alunos têm marcação 🎉</div>';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'modal-backdrop show';
+  wrap.id = 'eeSemMarcModal';
+  wrap.innerHTML = '<div class="modal" style="max-width:480px;">' +
+      '<h2 style="margin-top:0;">EE sem marcação (' + lista.length + ')</h2>' +
+      '<div style="max-height:60vh;overflow:auto;margin:8px 0 16px;">' + rows + '</div>' +
+      '<button class="modal-btn cancel" id="eeSemMarcClose" style="width:100%;">Fechar</button>' +
+    '</div>';
+  document.body.appendChild(wrap);
+  wrap.querySelector('#eeSemMarcClose').addEventListener('click', () => wrap.remove());
+  wrap.addEventListener('click', (e) => { if (e.target === wrap) wrap.remove(); });
+  wrap.querySelectorAll('.ee-wa-btn').forEach(b => {
+    b.addEventListener('click', () => { eeConvidarWhatsApp(b.dataset.id); });
+  });
+}
+
+document.getElementById('btnEEsemMarcacao')?.addEventListener('click', eeSemMarcacaoOpen);
 document.querySelectorAll('.sr-filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     srFiltroAtual = btn.dataset.filter;
