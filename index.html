@@ -1449,6 +1449,7 @@ body.evaluation-mode .tabbar { display: none; }
       <div class="pct" id="totalPct">—</div>
       <div class="lbl">Total</div>
     </div>
+    <button class="icon-btn" id="avalDebugBtn" title="Diagnóstico" style="font-size:16px;background:#fff7e0;color:#7a5b00;border:1px solid #d4a017;margin-right:6px;">🐞</button>
     <button class="icon-btn" id="avalMenuBtn" title="Opções do aluno" style="font-size:20px;letter-spacing:1px;">⋯</button>
   </header>
 
@@ -8241,6 +8242,22 @@ function attachScoreListeners() {
       const section = row.dataset.section;
       const idx = parseInt(row.dataset.idx);
       const score = parseInt(btn.dataset.score);
+
+      // ─── Defensivo: garantir que a secção e o índice existem em avalState/touched ───
+      // (resolve casos onde a avaliação foi importada/migrada sem todas as secções/critérios)
+      try {
+        const aluno = currentAlunoList[currentAlunoIdx];
+        const levelDef = aluno && LEVELS[aluno.nivel];
+        if (levelDef && typeof _normalizeAvalSections === 'function') {
+          _normalizeAvalSections(avalState, levelDef);
+        }
+        if (!avalState.sections[section]) avalState.sections[section] = [];
+        while (avalState.sections[section].length <= idx) avalState.sections[section].push(null);
+        if (!touched.sections[section]) touched.sections[section] = {};
+      } catch (err) {
+        console.warn('[score-click] defesa falhou:', err);
+      }
+
       const wasTouched = touched.sections[section] && touched.sections[section][idx];
       if (avalState.sections[section][idx] === score && wasTouched) {
         avalState.sections[section][idx] = null;
@@ -12697,7 +12714,69 @@ document.getElementById('srBtnSend')?.addEventListener('click', srEnviarSelecion
 
 
 // ═══════════════════════════════════════════════════════════════
-//  DIAGNÓSTICO AVALIAÇÕES (botão Definições)
+//  🐞 DEBUG DA AVALIAÇÃO ABERTA (temporário)
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('avalDebugBtn')?.addEventListener('click', () => {
+  const aluno = currentAlunoList && currentAlunoList[currentAlunoIdx];
+  if (!aluno) { alert('Sem aluno aberto.'); return; }
+  const levelDef = LEVELS[aluno.nivel];
+  const lines = [];
+  lines.push('=== ALUNO ===');
+  lines.push('Nome: ' + aluno.nome);
+  lines.push('id: ' + aluno.id + ' · status: ' + (aluno.status || '—'));
+  lines.push('nivel: ' + aluno.nivel + ' · professorId: ' + (aluno.professorId || '—'));
+  lines.push('CURRENT_PROFESSOR_ID: ' + CURRENT_PROFESSOR_ID);
+  lines.push('isMyAluno: ' + (typeof isMyAluno === 'function' ? isMyAluno(aluno) : '?'));
+  lines.push('');
+  lines.push('=== AVALSTATE ===');
+  lines.push('finalized: ' + avalState.finalized);
+  lines.push('passa: ' + avalState.passa);
+  lines.push('savedAt: ' + (avalState.savedAt || '—'));
+  lines.push('nivel guardado: ' + avalState.nivel);
+  lines.push('epoca: ' + currentEpoca);
+  lines.push('historicalView: ' + (historicalViewMode && historicalViewMode.active));
+  lines.push('');
+  lines.push('=== LEVELDEF.sections (esperadas) ===');
+  if (levelDef) {
+    levelDef.sections.forEach(s => {
+      lines.push('  ' + s.key + ' (' + s.title + '): ' + s.criteria.length + ' crit.');
+    });
+  } else {
+    lines.push('  LEVELS["' + aluno.nivel + '"] = undefined !!');
+  }
+  lines.push('');
+  lines.push('=== AVALSTATE.sections (real) ===');
+  if (avalState.sections) {
+    Object.keys(avalState.sections).forEach(k => {
+      const v = avalState.sections[k];
+      const t = Array.isArray(v) ? 'array' : typeof v;
+      const len = v && v.length !== undefined ? v.length : '?';
+      lines.push('  ' + k + ': type=' + t + ' len=' + len + ' val=' + JSON.stringify(v));
+    });
+  } else {
+    lines.push('  (vazio!)');
+  }
+  lines.push('');
+  lines.push('=== DOM ===');
+  const cards = document.querySelectorAll('#view-aval .section-card');
+  cards.forEach(c => {
+    lines.push('  card[' + c.dataset.section + '] classes: ' + c.className);
+  });
+  const rows = document.querySelectorAll('#view-aval .score-row[data-section]');
+  lines.push('  total score-rows no DOM: ' + rows.length);
+  // Tentar especificamente a última secção (provavelmente a problemática)
+  if (levelDef) {
+    const lastSec = levelDef.sections[levelDef.sections.length - 1];
+    const lastRows = document.querySelectorAll('#view-aval .score-row[data-section="' + lastSec.key + '"]');
+    lines.push('  rows da secção "' + lastSec.key + '": ' + lastRows.length);
+    lastRows.forEach((r, i) => {
+      lines.push('    [' + i + '] idx=' + r.dataset.idx + ' onclick=' + (typeof r.onclick));
+    });
+  }
+  const txt = lines.join('\n');
+  console.log(txt);
+  alert(txt);
+});
 //  Re-corre normalização e mostra relatório.
 // ═══════════════════════════════════════════════════════════════
 document.getElementById('btnDiagAval')?.addEventListener('click', () => {
