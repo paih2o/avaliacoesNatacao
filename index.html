@@ -10447,13 +10447,17 @@ function openSlotModal(slotId, preselectAlunoId) {
         confirmLabel: 'Mover'
       });
       if (!ok) return;
-      // Capturar hora antiga para o email
+      // Capturar hora antiga + badges para seguirem o aluno
       oldTimeForEmail = existing.slot.time;
-      // Limpar slot antigo
+      slot.emailSentAt = existing.slot.emailSentAt || null;
+      slot.lembreteSentAt = existing.slot.lembreteSentAt || null;
+      slot.whatsappSentAt = existing.slot.whatsappSentAt || null;
+      // Libertar slot antigo por completo (incl. limpar badges)
       existing.slot.alunoId = null;
       existing.slot.status = 'free';
       existing.slot._unbook = true;
       existing.slot.emailSentAt = null;
+      existing.slot.lembreteSentAt = null;
       existing.slot.whatsappSentAt = null;
     }
     slot.alunoId = alunoId;
