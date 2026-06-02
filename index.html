@@ -10597,11 +10597,18 @@ function openMoveSlotPicker(originSlot) {
       // Capturar dados antes de mover (para o email)
       const movedAlunoId = originSlot.alunoId;
       const oldTime = originSlot.time;
-      // Mover aluno
+      // Mover aluno — os badges (email/lembrete/WhatsApp) seguem o aluno
       targetSlot.alunoId = originSlot.alunoId;
       targetSlot.status = originSlot.status;
+      targetSlot.emailSentAt = originSlot.emailSentAt || null;
+      targetSlot.lembreteSentAt = originSlot.lembreteSentAt || null;
+      targetSlot.whatsappSentAt = originSlot.whatsappSentAt || null;
+      // Libertar o slot antigo por completo (incl. limpar badges)
       originSlot.alunoId = null;
       originSlot.status = 'free';
+      originSlot.emailSentAt = null;
+      originSlot.lembreteSentAt = null;
+      originSlot.whatsappSentAt = null;
       originSlot._unbook = true;
       saveSessoes(CURRENT_YEAR, SESSOES);
       closeModal('moveSlotModal');
